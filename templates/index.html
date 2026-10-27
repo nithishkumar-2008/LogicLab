@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LogicLab — Neon Circuit Lab</title>
+  <meta name="description" content="Interactive digital logic simulator: Boolean expressions, truth tables and live circuit diagrams.">
+  <meta name="theme-color" content="#0B1020">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <div class="app">
+
+    <aside class="sidebar">
+      <a class="brand" href="#dashboard" aria-label="LogicLab home">
+        <svg class="brand-mark" viewBox="0 0 48 32" width="40" height="28" aria-hidden="true" focusable="false">
+          <path d="M3,4 H20 C34,4 42,10 42,16 C42,22 34,28 20,28 H3 Z" fill="none" stroke="currentColor" stroke-width="3"/>
+          <path d="M42,16 H47" stroke="currentColor" stroke-width="3"/>
+        </svg>
+        <span class="brand-name">Logic<b>Lab</b></span>
+      </a>
+      <nav aria-label="Main">
+        <ul>
+          <li><a href="#dashboard" aria-current="page"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Dashboard</span></a></li>
+          <li><a href="#simulator"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg><span>Circuit Simulator</span></a></li>
+          <li><a href="#truth-table"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/></svg><span>Truth Table</span></a></li>
+          <li><a href="#examples"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg><span>Examples</span></a></li>
+          <li><a href="#about"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>About</span></a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <div class="main-col">
+      <header class="topbar">
+        <div>
+          <h1>LogicLab</h1>
+          <p class="tagline">Type Boolean logic. Watch the circuit think.</p>
+        </div>
+        <p id="status" class="status" role="status"><span class="dot" aria-hidden="true"></span><span id="status-text">CONNECTING…</span></p>
+      </header>
+
+      <main id="content" tabindex="-1">
+        <section id="dashboard" class="stats" data-views="dashboard" aria-label="Live summary">
+          <div class="card stat rise r1"><h2>Variables</h2><div id="stat-vars" class="stat-val">—</div></div>
+          <div class="card stat rise r2"><h2>Operators</h2><div id="stat-ops" class="stat-val">—</div></div>
+          <div class="card stat rise r3"><h2>Input combinations</h2><div id="stat-rows" class="stat-val">—</div></div>
+          <div class="card stat rise r4"><h2>Current output</h2><div id="stat-out" class="stat-val">—</div></div>
+        </section>
+
+        <section id="simulator" class="workspace" data-views="dashboard simulator" aria-label="Circuit simulator">
+          <div class="card editor rise r1">
+            <h2>Logic expression</h2>
+            <form id="expr-form" novalidate>
+              <label for="expression">Boolean expression</label>
+              <input id="expression" type="text" autocomplete="off" spellcheck="false" maxlength="200"
+                     value="(A AND B) OR NOT C" aria-describedby="message hint">
+
+              <div class="group-label" id="sig-label">Signals</div>
+              <div class="chips" role="group" aria-labelledby="sig-label">
+                <button type="button" class="chip" data-insert="A" aria-label="Insert variable A">A</button>
+                <button type="button" class="chip" data-insert="B" aria-label="Insert variable B">B</button>
+                <button type="button" class="chip" data-insert="C" aria-label="Insert variable C">C</button>
+                <button type="button" class="chip" data-insert="D" aria-label="Insert variable D">D</button>
+              </div>
+
+              <div class="group-label" id="op-label">Operators</div>
+              <div class="ops" role="group" aria-labelledby="op-label">
+                <button type="button" class="btn-op op-and" data-insert=" AND " aria-label="Insert AND">AND</button>
+                <button type="button" class="btn-op op-or" data-insert=" OR " aria-label="Insert OR">OR</button>
+                <button type="button" class="btn-op op-not" data-insert="NOT " aria-label="Insert NOT">NOT</button>
+                <button type="button" class="btn-op op-xor" data-insert=" XOR " aria-label="Insert XOR">XOR</button>
+                <button type="button" class="btn-op op-paren" data-insert="(" aria-label="Insert opening parenthesis">(</button>
+                <button type="button" class="btn-op op-paren" data-insert=")" aria-label="Insert closing parenthesis">)</button>
+              </div>
+
+              <div class="actions">
+                <button type="submit" id="sim-btn" class="btn-sim"><span class="spinner" aria-hidden="true"></span><span id="sim-label">SIMULATE CIRCUIT</span></button>
+                <button type="button" id="clear-btn" class="btn-ghost">Reset</button>
+              </div>
+            </form>
+            <p id="message" class="message" role="status" aria-live="polite"></p>
+            <p id="hint" class="hint">Precedence: NOT, then AND, then XOR, then OR. Parentheses win. Up to 4 variables (A–Z). Symbols ∧ ∨ ¬ ⊕ also work. Full syntax in <a href="#about">About</a>.</p>
+          </div>
+
+          <div class="card circuit-card rise r2">
+            <div class="card-head">
+              <h2>Live circuit</h2>
+              <ul class="legend" aria-label="Legend">
+                <li><span class="sw sw-and"></span>AND</li>
+                <li><span class="sw sw-or"></span>OR</li>
+                <li><span class="sw sw-not"></span>NOT</li>
+                <li><span class="sw sw-xor"></span>XOR</li>
+                <li><span class="line line-hi"></span>HIGH (1)</li>
+                <li><span class="line line-lo"></span>LOW (0)</li>
+              </ul>
+            </div>
+            <div id="circuit-wrap" class="canvas scroll" aria-live="polite"></div>
+            <h3 class="sub">Input testing</h3>
+            <div id="switches" class="switches" role="group" aria-label="Input switches"></div>
+            <div id="output-display" class="output-display" aria-live="polite"></div>
+          </div>
+        </section>
+
+        <section id="truth-table" class="split" data-views="truth-table" hidden aria-label="Truth table and explanation">
+          <div class="card rise r1">
+            <div class="card-head">
+              <h2>Truth table</h2>
+              <div class="btn-row">
+                <button type="button" id="copy-btn" class="btn-ghost small" disabled>Copy</button>
+                <button type="button" id="csv-btn" class="btn-ghost small" disabled>Download CSV</button>
+              </div>
+            </div>
+            <div id="table-wrap" class="scroll table-scroll"></div>
+          </div>
+          <div id="explain-wrap" class="explain" aria-label="How it works"></div>
+        </section>
+
+        <section id="examples" data-views="examples" hidden aria-labelledby="examples-title">
+          <h2 id="examples-title" class="section-title">Examples</h2>
+          <div id="examples-grid" class="examples-grid"></div>
+        </section>
+
+        <section id="about" class="card about" data-views="about" hidden aria-labelledby="about-title">
+          <h2 id="about-title">About LogicLab</h2>
+          <div class="about-grid">
+            <div>
+              <h3>What it is</h3>
+              <p>LogicLab is an interactive digital logic simulator. Type a Boolean expression and it builds the truth table and the matching logic-gate circuit.</p>
+            </div>
+            <div>
+              <h3>Purpose</h3>
+              <p>To help students see that Boolean algebra, truth tables and gate circuits are three views of the same logic.</p>
+            </div>
+            <div>
+              <h3>Supported operations</h3>
+              <div class="scroll">
+                <table class="syntax">
+                  <caption class="visually-hidden">Operators, highest precedence first</caption>
+                  <thead><tr><th scope="col">Order</th><th scope="col">Operator</th><th scope="col">Symbols</th></tr></thead>
+                  <tbody>
+                    <tr><td>1</td><td>NOT</td><td>¬ ! ~</td></tr>
+                    <tr><td>2</td><td>AND</td><td>∧ &amp;</td></tr>
+                    <tr><td>3</td><td>XOR</td><td>⊕ ^</td></tr>
+                    <tr><td>4</td><td>OR</td><td>∨ |</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="hint">Parentheses override the order. Up to 4 variables (A–Z), plus constants 0 and 1.</p>
+            </div>
+            <div>
+              <h3>Technologies</h3>
+              <ul class="tags" aria-label="Technologies used">
+                <li>Python</li><li>Flask</li><li>HTML</li><li>CSS</li><li>JavaScript</li><li>SVG</li>
+              </ul>
+              <h3 class="gap-top">How to learn with it</h3>
+              <ol>
+                <li>Enter an expression or load an example.</li>
+                <li>Predict each row of the truth table before reading it.</li>
+                <li>Flip the input switches and watch the highlighted row and the wires.</li>
+                <li>Read “How it works”, then change one operator and compare.</li>
+              </ol>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer"><p>LogicLab — Python · Flask · vanilla JS · SVG</p></footer>
+    </div>
+  </div>
+  <div id="toasts" class="toasts" aria-hidden="true"></div>
+</body>
+</html>
